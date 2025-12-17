@@ -11,31 +11,47 @@ class FilamentActivityLogServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Publish tanımları (migrations + dosyalar)
+        /**
+         * 🔑 1. Laravel’e paketin migration path’ini tanıt
+         * (publish edilmeden bile migrationExists gibi kontroller sağlıklı çalışır)
+         */
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+        /**
+         * 🔑 2. Publish tanımları
+         */
         $this->registerPublishes();
 
         if (!$this->app->runningInConsole()) {
             return;
         }
 
-        // Artisan command'leri register et
+        /**
+         * 🔑 3. Artisan command
+         */
         $this->commands([
             InstallCommand::class,
         ]);
 
-        // composer require sonrası 1 kere otomatik kurulum
+        /**
+         * 🔑 4. composer require sonrası tek seferlik auto install
+         */
         $this->autoInstallOnce();
     }
 
     protected function registerPublishes(): void
     {
-        // ✅ Stub path: src/database/migrations/...
+        /**
+         * Migration stub → gerçek migration
+         */
         $this->publishes([
             __DIR__ . '/../database/migrations/create_activity_logs_table.php.stub'
             => database_path('migrations/' . date('Y_m_d_His') . '_create_activity_logs_table.php'),
         ], 'filament-activity-log-migrations');
 
-        // ✅ Model / Filament Resource / Pages / Services / Trait (istersen publish tag ile de alınabilir)
+        /**
+         * App içine kopyalanacak dosyalar
+         */
         $this->publishes([
             __DIR__ . '/../Models/ActivityLog.php'
             => app_path('Models/ActivityLog.php'),
@@ -59,14 +75,13 @@ class FilamentActivityLogServiceProvider extends ServiceProvider
 
     protected function autoInstallOnce(): void
     {
-        // Sen storage kullanmıyorum demiştin; o yüzden proje kökünde marker file:
         $marker = base_path('.filament-activity-log.installed');
 
         if (File::exists($marker)) {
-            return; // zaten kuruldu
+            return;
         }
 
-        // 1) Migration publish (zaten varsa tekrar üretmeyelim)
+        // Migration yoksa publish et
         if (!$this->migrationExists()) {
             Artisan::call('vendor:publish', [
                 '--tag' => 'filament-activity-log-migrations',
@@ -74,13 +89,12 @@ class FilamentActivityLogServiceProvider extends ServiceProvider
             ]);
         }
 
-        // 2) Dosyaları publish et (varsa ezme)
+        // Dosyalar
         $this->publishIfMissing(app_path('Models/ActivityLog.php'), 'filament-activity-log-files');
         $this->publishIfMissing(app_path('Filament/Resources/ActivityLogResource.php'), 'filament-activity-log-files');
         $this->publishIfMissing(app_path('Services/FilamentActivityLogger.php'), 'filament-activity-log-files');
         $this->publishIfMissing(app_path('Filament/Concerns/HasActivityLogger.php'), 'filament-activity-log-files');
 
-        // 3) Marker oluştur
         File::put($marker, now()->toDateTimeString());
     }
 
