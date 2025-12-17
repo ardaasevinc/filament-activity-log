@@ -159,30 +159,30 @@ class ActivityLogResource extends Resource
     {
         return [
             'index' => Pages\ListActivityLogs::route('/'),
-            'view'  => Pages\ViewActivityLog::route('/{record}'),
+            'view' => Pages\ViewActivityLogs::route('/{record}'),
         ];
     }
 
     /**
      * YETKİLER (AUDIT MANTIĞI)
      */
-    public static function canCreate(): bool
-    {
-        return false; // Log manuel oluşturulmaz
-    }
+    // public static function canCreate(): bool
+    // {
+    //     return false; // Log manuel oluşturulmaz
+    // }
 
-    public static function canViewAny(): bool
-    {
-        return auth()->user()?->can('view_' . static::$modelName);
-    }
+    // public static function canViewAny(): bool
+    // {
+    //     return auth()->user()?->can('view_' . static::$modelName);
+    // }
 
-    public static function canEdit(Model $record): bool
-    {
-        return false; // Log düzenlenmez
-    }
+    // public static function canEdit(Model $record): bool
+    // {
+    //     return false; // Log düzenlenmez
+    // }
 
-    public static function canDelete(Model $record): bool
-    {
-        return auth()->user()?->can('delete_' . static::$modelName);
-    }
+    // public static function canDelete(Model $record): bool
+    // {
+    //     return auth()->user()?->can('delete_' . static::$modelName);
+    // }
 }
