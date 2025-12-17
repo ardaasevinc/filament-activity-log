@@ -16,7 +16,8 @@ class FilamentActivityLogServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
         $this->publishes([
-                dirname(__DIR__, 2) . '/database/migrations/create_activity_logs_table.php.stub'
+                dirname(__DIR__, 1)
+                . '/database/migrations/create_activity_logs_table.php.stub'
                 => database_path(
                         'migrations/' . date('Y_m_d_His') . '_create_activity_logs_table.php'
                     ),
