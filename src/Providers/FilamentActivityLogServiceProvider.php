@@ -5,19 +5,25 @@ namespace Ardaasevinc\FilamentActivityLog\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Ardaasevinc\FilamentActivityLog\Commands\InstallCommand;
 
 class FilamentActivityLogServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Publish tanımları (migrations + app'e kopyalanacak dosyalar)
+        // Publish tanımları (migrations + dosyalar)
         $this->registerPublishes();
 
-        // ✅ İSTEDİĞİN ŞEY: composer require sonrası OTOMATİK yerleştirme
         if (!$this->app->runningInConsole()) {
             return;
         }
 
+        // Artisan command'leri register et
+        $this->commands([
+            InstallCommand::class,
+        ]);
+
+        // composer require sonrası 1 kere otomatik kurulum
         $this->autoInstallOnce();
     }
 
