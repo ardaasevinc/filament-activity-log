@@ -14,12 +14,9 @@ class FilamentActivityLogServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Paket migration'larını otomatik yükle
-        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
-
-        // (İleride) config publish etmek istersek hazır olsun
-        // $this->publishes([
-        //     __DIR__ . '/../config/filament-activity-log.php' => config_path('filament-activity-log.php'),
-        // ], 'filament-activity-log-config');
+        $this->publishes([
+            __DIR__ . '/../../database/migrations/create_activity_logs_table.php.stub' =>
+                database_path('migrations/' . date('Y_m_d_His') . '_create_activity_logs_table.php'),
+        ], 'filament-activity-log-migrations');
     }
 }
