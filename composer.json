@@ -14,14 +14,11 @@
     "laravel/framework": "^11.0 || ^12.0",
     "filament/filament": "^3.0"
   },
-  "autoload": {
+"autoload": {
     "psr-4": {
-      "Ardaasevinc\\FilamentActivityLog\\": "src/"
-    },
-    "files": [
-      "src/database/migrations/create_activity_logs_table.php.stub"
-    ]
-  },
+        "Ardaasevinc\\FilamentActivityLog\\": "src/"
+    }
+},
   "extra": {
     "laravel": {
       "providers": [
