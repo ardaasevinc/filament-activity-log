@@ -159,7 +159,7 @@ class ActivityLogResource extends Resource
     {
         return [
             'index' => Pages\ListActivityLogs::route('/'),
-            'view' => Pages\ViewActivityLogs::route('/{record}'),
+            'view' => Pages\ViewActivityLog::route('/{record}'),
         ];
     }
 
