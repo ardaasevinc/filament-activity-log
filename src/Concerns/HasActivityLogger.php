@@ -2,31 +2,41 @@
 
 namespace App\Filament\Concerns;
 
-use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
 use App\Services\FilamentActivityLogger;
+use Filament\Resources\Pages\CreateRecord;
+use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Database\Eloquent\Model;
 
 trait HasActivityLogger
 {
     /**
-     * GÖRÜNTÜLEME
-     * (Sadece Edit sayfası açılınca çalışır)
+     * Güncelleme öncesi eski veriyi tutmak için geçici değişken
+     */
+    protected array $oldData = [];
+
+    /**
+     * GÖRÜNTÜLEME (VIEW)
+     * Edit veya View sayfası açıldığında çalışır.
      */
     protected function afterFill(): void
     {
-        if (! $this->record) {
-            return;
+        // Sadece kayıt varsa ve Edit/View sayfalarındaysak logla
+        if (
+            $this->record &&
+            ($this instanceof EditRecord || $this instanceof ViewRecord)
+        ) {
+            FilamentActivityLogger::log(
+                event: 'view',
+                resource: static::getResource(),
+                model: $this->record
+            );
         }
-
-        FilamentActivityLogger::log(
-            'view',
-            static::getResource(),
-            $this->record
-        );
     }
 
     /**
-     * CREATE
+     * OLUŞTURMA (CREATE)
+     * Kayıt oluşturulduktan hemen sonra çalışır.
      */
     protected function afterCreate(): void
     {
@@ -35,16 +45,29 @@ trait HasActivityLogger
         }
 
         FilamentActivityLogger::log(
-            'create',
-            static::getResource(),
-            $this->record,
-            null,
-            $this->record->toArray()
+            event: 'create',
+            resource: static::getResource(),
+            model: $this->record,
+            oldData: null,
+            newData: $this->record->toArray()
         );
     }
 
     /**
-     * UPDATE
+     * GÜNCELLEME ÖNCESİ (BEFORE UPDATE)
+     * Kayıt güncellenmeden önceki halini hafızaya alıyoruz.
+     */
+    protected function beforeSave(): void
+    {
+        if ($this->record && $this instanceof EditRecord) {
+            // Değişiklik yapılmamış ham veriyi (original) sakla
+            $this->oldData = $this->record->toArray();
+        }
+    }
+
+    /**
+     * GÜNCELLEME SONRASI (AFTER UPDATE)
+     * Kayıt güncellendikten sonra çalışır.
      */
     protected function afterSave(): void
     {
@@ -52,17 +75,21 @@ trait HasActivityLogger
             return;
         }
 
+        // Sadece değişen alanları (dirty) almak istersen: $this->record->getChanges()
+        // Tüm son hali almak istersen: $this->record->toArray()
+
         FilamentActivityLogger::log(
-            'update',
-            static::getResource(),
-            $this->record,
-            $this->record->getOriginal(),
-            $this->record->getChanges()
+            event: 'update',
+            resource: static::getResource(),
+            model: $this->record,
+            oldData: $this->oldData, // beforeSave'den gelen eski veri
+            newData: $this->record->toArray() // Yeni güncel veri
         );
     }
 
     /**
-     * DELETE
+     * SİLME (DELETE)
+     * Kayıt silinmeden hemen önce çalışır.
      */
     protected function beforeDelete(): void
     {
@@ -71,26 +98,18 @@ trait HasActivityLogger
         }
 
         FilamentActivityLogger::log(
-            'delete',
-            static::getResource(),
-            $this->record,
-            $this->record->toArray(),
-            null
+            event: 'delete',
+            resource: static::getResource(),
+            model: $this->record,
+            oldData: $this->record->toArray(),
+            newData: null
         );
     }
 
-    /**
-     * DELETE BUTONU
-     * (SADECE EditRecord sayfasında gösterilir)
+    /*
+     * DİKKAT: getHeaderActions metodu buradan kaldırılmıştır.
+     * Bu metodu Trait içinde tanımlamak, sayfadaki diğer butonları (Save, Cancel) 
+     * devre dışı bırakabilir veya çakışma yaratabilir.
+     * Delete butonu zaten Filament EditRecord sayfasında varsayılan olarak gelir.
      */
-    protected function getHeaderActions(): array
-    {
-        if (! $this instanceof EditRecord) {
-            return [];
-        }
-
-        return [
-            Actions\DeleteAction::make(),
-        ];
-    }
 }
